@@ -15,32 +15,33 @@ class State;
 
 class Turn {
 public:
-  const static int kDataLength = 30;
+    const static int kDataLength = 30;
 
-  Turn() {}
-  Turn(const std::vector<Coord*> coords, const bool capture)
-    : coords_(coords), capture_(capture) {
-    Encode();
-  }
-  ~Turn() {}
+    Turn() {}
+    Turn(const std::vector<Coord*> coords, const bool capture)
+        : coords_(coords), capture_(capture) {
+        Encode();
+    }
+    ~Turn() {}
 
-  void Decode();
+    void Decode();
 
-  bool CheckMatching(Turn* turn) const;
+    bool CheckMatching(Turn* turn) const;
 
-  char* data() { return data_; }
-  std::vector<Coord*> coords() const { return coords_; }
-  bool capture() const { return capture_; }
+    char* Data() { return data_; }
+    std::vector<Coord*> Coords() const { return coords_; }
+    bool Capture() const { return capture_; }
 
 private:
-  const char kXMin = 'a';     // COORDONATA X MINIMA
-  const char kYMin = '1';     // COORDONATA Y MINIMA
+    const char kXMin = 'a';     // COORDONATA X MINIMA
+    const char kYMin = '1';     // COORDONATA Y MINIMA
 
-  void Encode();
+    void Encode();
 
-  char data_[kDataLength];
-  std::vector<Coord*> coords_;
-  bool capture_;
+    char data_[kDataLength];
+    std::vector<Coord*> coords_;
+    bool capture_;
 };
 
 #endif    // TURN_H_
+
