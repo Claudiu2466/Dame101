@@ -1,17 +1,24 @@
-all: Dame101
+# Definim compilatorul și opțiunile
+CXX = g++
+CXXFLAGS = -std=c++17 -Wall
 
-Dame101: state.o turn.o main.o 
-    g++ -o Dame101.exe state.o turn.o main.o
+# Fișierul executabil
+EXEC = Dame101.exe
 
-state.o:
-    g++ state.cpp -o state.o -c
+# Fișiere obiect
+OBJS = state.o turn.o main.o
 
-turn.o:
-    g++ turn.cpp -o turn.o -c
+# Ținta principală: creare executabil
+all: $(EXEC)
 
-main.o:
-    g++ main.cpp -o main.o -c
+# Regulă pentru a lega fișierele obiect într-un executabil
+$(EXEC): $(OBJS)
+	$(CXX) -o $(EXEC) $(OBJS)
 
+# Regulă pentru fiecare fișier obiect
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
+# Curățare fișiere obiect și executabil
 clean:
-    rm -f *.o *.exe
+	rm -f *.o *.exe
