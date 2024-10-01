@@ -132,3 +132,103 @@ Reprezintă o mișcare (săritură sau mișcare) pe tablă, incluzând coordonat
 - `void Decode()`:
   - **Scop**: Decodifică datele codificate înapoi în coordonate și informații despre captura pieselor.
   - **Detaliu**: Transformă datele codificate în obiecte `Coord` și flagul de captură.
+
+
+
+# Lab02 
+# Dame101 - Documentație Makefile (Metoda de constructie a proiectului)
+
+## 1. Definirea variabilelor pentru compilare
+
+În Makefile, primele două linii definesc variabile pentru a simplifica codul și pentru a-l face mai flexibil:
+
+- `CXX = g++` specifică compilatorul C++ (în acest caz, g++).
+- `CXXFLAGS = -std=c++17 -Wall` definește opțiunile de compilare:
+  - `-std=c++17` specifică standardul C++17.
+  - `-Wall` activează toate avertizările importante în cod (oferă sugestii dacă codul conține probleme posibile).
+
+## 2. Definirea fișierului executabil și a fișierelor obiect
+
+- `EXEC = Dame101.exe` definește numele fișierului executabil care va fi creat după ce toate fișierele sunt compilate și legate.
+- `OBJS = state.o turn.o main.o` definește fișierele obiect (.o) care trebuie generate prin compilarea fișierelor .cpp.
+
+## 3. Ținta principală: `all`
+
+Aceasta este ținta principală (ce va fi executată implicit când rulezi `make`). Ea depinde de executabilul `Dame101.exe`, care va fi creat doar dacă fișierele obiect sunt gata și la zi.
+
+- `$(EXEC)` este variabila definită mai sus care conține numele executabilului.
+
+## 4. Linkarea fișierelor obiect într-un executabil
+
+Această regulă specifică faptul că executabilul `Dame101.exe` va fi creat prin legarea fișierelor obiect `state.o`, `turn.o` și `main.o`.
+
+- Comanda `$(CXX) -o $(EXEC) $(OBJS)` înseamnă că g++ va lua toate fișierele obiect și le va lega într-un singur fișier executabil:
+  - `$(CXX)` este compilatorul definit (adică g++).
+  - `-o $(EXEC)` spune compilatorului să creeze un fișier executabil cu numele `Dame101.exe`.
+  - `$(OBJS)` este lista de fișiere obiect (adică `state.o`, `turn.o`, `main.o`).
+
+## 5. Compilarea fișierelor sursă în fișiere obiect
+
+Aceasta este o regulă de tip pattern rule (regulă generală) care specifică cum să se compileze orice fișier `.cpp` într-un fișier `.o`:
+
+- `%.o` înseamnă că se aplică pentru orice fișier `.o` care trebuie generat.
+- `%.cpp` înseamnă că fișierul `.cpp` cu același nume este sursa.
+
+Comanda `$(CXX) $(CXXFLAGS) -c $< -o $@` explică pașii de compilare:
+
+- `$(CXX)` este compilatorul (adică g++).
+- `$(CXXFLAGS)` include opțiunile de compilare definite anterior.
+- `-c` indică faptul că vrem doar să compilăm fișierul sursă într-un fișier obiect, nu să creăm un executabil.
+- `$<` se referă la fișierul sursă (.cpp).
+- `$@` se referă la fișierul obiect care va fi generat (.o).
+
+De exemplu:
+
+Dacă trebuie să compilezi `state.cpp` într-un fișier obiect `state.o`, comanda va deveni:
+
+- `g++ -std=c++17 -Wall -c state.cpp -o state.o`
+
+Aceasta va produce `state.o`.
+
+## 6. Curățarea fișierelor obiect și executabilul
+
+Aceasta este o regulă specială care șterge toate fișierele obiect (`*.o`) și executabilul (`*.exe`). Este utilă pentru a face o "curățare" completă și a reîncepe procesul de compilare de la zero.
+
+- `rm -f *.o *.exe` șterge fișierele, iar `-f` (force) se asigură că nu va apărea eroare dacă fișierele nu există.
+
+## 7. Fluxul detaliat de lucru
+
+Să presupunem că pornești cu fișierele sursă `state.cpp`, `turn.cpp` și `main.cpp`. Acest Makefile se va ocupa de următorii pași:
+
+### Pasul 1: Verificarea dependențelor
+
+Când rulezi comanda `make`, Makefile va verifica dacă executabilul `Dame101.exe` există și este la zi. Dacă executabilul nu există sau dacă fișierele sursă (`state.cpp`, `turn.cpp`, `main.cpp`) au fost modificate mai recent decât fișierele obiect corespunzătoare (`state.o`, `turn.o`, `main.o`), Makefile va re-compila acele fișiere sursă modificate.
+
+### Pasul 2: Compilarea fișierelor sursă în fișiere obiect
+
+Dacă oricare dintre fișierele obiect lipsește sau este vechi, Makefile va compila din nou acele fișiere sursă folosind regula:
+
+- `%.o: %.cpp`
+
+De exemplu, dacă `state.o` nu există sau este mai vechi decât `state.cpp`, comanda va deveni:
+
+- `g++ -std=c++17 -Wall -c state.cpp -o state.o`
+
+Acest lucru va produce fișierul obiect `state.o`.
+
+### Pasul 3: Linkarea fișierelor obiect
+
+Odată ce toate fișierele obiect sunt la zi, Makefile va folosi comanda de linkare:
+
+- `$(CXX) -o $(EXEC) $(OBJS)`
+
+Aceasta va lega toate fișierele obiect (`state.o`, `turn.o`, `main.o`) într-un singur fișier executabil `Dame101.exe`.
+
+### Pasul 4: Curățarea fișierelor
+
+Dacă rulezi comanda `make clean`, Makefile va șterge toate fișierele obiect și executabilul, lăsând proiectul "curat", pregătit pentru o nouă compilare de la zero.
+
+## Concluzie
+
+Acest Makefile automatizează complet procesul de compilare și legare pentru proiectul jocului de dame. El verifică dependențele și recompilând doar fișierele sursă care s-au schimbat, asigurând o gestionare eficientă a resurselor. Prin curățarea fișierelor generate, proiectul rămâne organizat și pregătit pentru modificări sau extinderi viitoare. Această structură permite dezvoltatorilor să se concentreze mai mult pe logica și funcționalitatea jocului, fără a se îngrijora de detalii tehnice, facilitând astfel crearea unei experiențe captivante și bine optimizate pentru utilizatori.
+
