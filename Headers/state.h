@@ -1,16 +1,16 @@
 ﻿//
 // STAREA TABLEI DE JOC SI JUCATORUL ACTIV.
-// 
+//
 
 #ifndef STATE_H_
 #define STATE_H_
 
 #include <vector>
+#include <iostream> // for operator overloading
 #include "turn.h"
 #include "coord.h"
 
 class Turn;
-
 
 class State {
 public:
@@ -18,8 +18,16 @@ public:
     const static int kIdIndex = kBoardSize * kBoardSize;
     const static int kDataLength = kIdIndex + 1 + 1;
 
-    State();
+    State(); // constructor implicit
+    State(const State& other); // constructor de copiere
+    State(const char* data); // constructor cu param
     ~State() {}
+
+    State& operator=(const State& other); // operator de copiere
+    bool operator==(const State& other) const; // operator de comparare
+
+    friend std::istream& operator>>(std::istream& is, State& state); // operator de citire
+    friend std::ostream& operator<<(std::ostream& os, const State& state); // operator de afisare
 
     void BuildListValidTurns();
     void Print() const;
@@ -47,8 +55,7 @@ private:
 
     void CheckValidTurns(Coord* coord);
 
-    bool CheckValidJumpTurns(
-        Coord* pre_coord, Coord* new_coord, std::vector<Coord*> coords, bool king);
+    bool CheckValidJumpTurns(Coord* pre_coord, Coord* new_coord, std::vector<Coord*> coords, bool king);
     void CheckValidMoveTurns(Coord* coord);
 
     void AddValidJumpTurn(const std::vector<Coord*> coords);
@@ -79,4 +86,3 @@ private:
 };
 
 #endif    // STATE_H_
-
