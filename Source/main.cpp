@@ -2,7 +2,7 @@
 #include "state.h"
 #include "turn.h"
 
-// Functie care afiseaza meniul principal
+// Functie care afiseaza meniul principals
 void DisplayMainMenu() {
     std::cout << "Bun Venit la jocul de dame!\n";
     std::cout << "=============================\n";
