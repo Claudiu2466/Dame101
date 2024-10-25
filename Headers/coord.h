@@ -1,6 +1,5 @@
-﻿// 
+﻿// coord.h
 // COORDONATELE TABLEI DE JOC
-//
 
 #ifndef COORD_H_
 #define COORD_H_
@@ -9,49 +8,31 @@
 
 struct Coord {
     // constructor implicit
-    Coord(int new_x = 0, int new_y = 0) : x(new_x), y(new_y) {}
+    Coord(int new_x = 0, int new_y = 0);
 
     // constructor de copiere
-    Coord(const Coord& other) : x(other.x), y(other.y) {}
+    Coord(const Coord& other);
 
     // destructor
-    ~Coord() {}
+    ~Coord();
 
-    // constructor cu parametrii
-    Coord& operator=(const Coord& other) {
-        if (this != &other) {
-            x = other.x;
-            y = other.y;
-        }
-        return *this;
-    }
+    // operator de atribuire
+    Coord& operator=(const Coord& other);
 
     // operator de comparare
-    bool operator==(const Coord& other) const {
-        return x == other.x && y == other.y;
-    }
+    bool operator==(const Coord& other) const;
 
     // operator de citire
-    friend std::istream& operator>>(std::istream& is, Coord& coord) {
-        is >> coord.x >> coord.y;
-        return is;
-    }
+    friend std::istream& operator>>(std::istream& is, Coord& coord);
 
     // operator de afisare
-    friend std::ostream& operator<<(std::ostream& os, const Coord& coord) {
-        os << "(" << coord.x << ", " << coord.y << ")";
-        return os;
-    }
+    friend std::ostream& operator<<(std::ostream& os, const Coord& coord);
 
     // Metoda pentru media coordonatelor
-    Coord Average(const Coord& coord) const {
-        return Coord((x + coord.x) >> 1, (y + coord.y) >> 1);
-    }
+    Coord Average(const Coord& coord) const;
 
     // Metoda pentru compararea coordonatelor
-    bool Equal(const Coord& coord) const {
-        return x == coord.x && y == coord.y;
-    }
+    bool Equal(const Coord& coord) const;
 
     int x;
     int y;
