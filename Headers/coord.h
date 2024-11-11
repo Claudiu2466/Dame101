@@ -1,24 +1,41 @@
-﻿// 
+﻿// coord.h
 // COORDONATELE TABLEI DE JOC
-//
 
 #ifndef COORD_H_
 #define COORD_H_
 
+#include <iostream>
+
 struct Coord {
-    Coord(int new_x = 0, int new_y = 0) : x(new_x), y(new_y) {}
-    ~Coord() {}
+    // constructor implicit
+    Coord(int new_x = 0, int new_y = 0);
 
-    Coord* Average(Coord* coord) {
-        return new Coord((x + coord->x) >> 1, (y + coord->y) >> 1);
-    }
+    // constructor de copiere
+    Coord(const Coord& other);
 
-    bool Equal(Coord* coord) {
-        return x == coord->x && y == coord->y;
-    }
+    // destructor
+    ~Coord();
+
+    // operator de atribuire
+    Coord& operator=(const Coord& other);
+
+    // operator de comparare
+    bool operator==(const Coord& other) const;
+
+    // operator de citire
+    friend std::istream& operator>>(std::istream& is, Coord& coord);
+
+    // operator de afisare
+    friend std::ostream& operator<<(std::ostream& os, const Coord& coord);
+
+    // Metoda pentru media coordonatelor
+    Coord Average(const Coord& coord) const;
+
+    // Metoda pentru compararea coordonatelor
+    bool Equal(const Coord& coord) const;
 
     int x;
     int y;
 };
 
-#endif    // COORD_H_
+#endif // COORD_H_
