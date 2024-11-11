@@ -1,20 +1,22 @@
-#include "state.h"
-
+﻿#include "state.h"
 #include <iostream>
+#include <memory>
+#include <algorithm>
+#include <string>
 
-// constructor implicit
+// Constructor implicit
 State::State() : o_count_(0), x_count_(0) {
     int index = 0;
 
     // Initializare tabla joc
-    for (int y = 1; y <= kBoardSize; ++y) {
-        for (int x = 1; x <= kBoardSize; ++x) {
+    for (int y = 0; y < kBoardSize; ++y) {
+        for (int x = 0; x < kBoardSize; ++x) {
             if ((x & 1) == (y & 1)) { // Spatiu permis
                 if (y <= 3) { // Jucatorul O
                     data_[index] = kValidPlayerO;
                     ++o_count_;
                 }
-                else if (y >= 6) { // Jucatorul X
+                else if (y >= 5) { // Jucatorul X
                     data_[index] = kValidPlayerX;
                     ++x_count_;
                 }
@@ -31,32 +33,28 @@ State::State() : o_count_(0), x_count_(0) {
 
     // Jucatorul O merge primul
     data_[index++] = kValidPlayerO;
-
-    // Sfarsit de sir
-    data_[index] = '\0';
 }
 
-// constructor de copiere
+// Constructor de copiere
 State::State(const State& other) {
-    std::copy(std::begin(other.data_), std::end(other.data_), data_);
+    data_ = other.data_;
     valid_turns_ = other.valid_turns_;
     forced_capture_ = other.forced_capture_;
     o_count_ = other.o_count_;
     x_count_ = other.x_count_;
 }
 
-// constructor cu param
-State::State(const char* data) {
-    std::copy(data, data + kDataLength, data_);
-
-    o_count_ = std::count(data_, data_ + kIdIndex, kValidPlayerO);
-    x_count_ = std::count(data_, data_ + kIdIndex, kValidPlayerX);
+// Constructor cu parametrii
+State::State(const std::string& data) {
+    data_ = data;
+    o_count_ = std::count(data_.begin(), data_.begin() + kIdIndex, kValidPlayerO);
+    x_count_ = std::count(data_.begin(), data_.begin() + kIdIndex, kValidPlayerX);
 }
 
-// operator de copiere
+// Operator de copiere
 State& State::operator=(const State& other) {
     if (this != &other) {
-        std::copy(std::begin(other.data_), std::end(other.data_), data_);
+        data_ = other.data_;
         valid_turns_ = other.valid_turns_;
         forced_capture_ = other.forced_capture_;
         o_count_ = other.o_count_;
@@ -65,61 +63,54 @@ State& State::operator=(const State& other) {
     return *this;
 }
 
-// operator de comparatie
+// Operator de comparatie
 bool State::operator==(const State& other) const {
-    return std::equal(std::begin(data_), std::end(data_), std::begin(other.data_));
+    return data_ == other.data_;
 }
 
-// operator de intrare
+// Operator de intrare
 std::istream& operator>>(std::istream& is, State& state) {
     is >> state.data_;
-
-    state.o_count_ = std::count(state.data_, state.data_ + State::kIdIndex, State::kValidPlayerO);
-    state.x_count_ = std::count(state.data_, state.data_ + State::kIdIndex, State::kValidPlayerX);
+    state.o_count_ = std::count(state.data_.begin(), state.data_.begin() + State::kIdIndex, State::kValidPlayerO);
+    state.x_count_ = std::count(state.data_.begin(), state.data_.begin() + State::kIdIndex, State::kValidPlayerX);
     return is;
 }
 
-// operator de afisare
+// Operator de afisare
 std::ostream& operator<<(std::ostream& os, const State& state) {
     os << state.data_;
     return os;
 }
 
 void State::BuildListValidTurns() {
-    // resetare
     valid_turns_.clear();
     forced_capture_ = false;
 
-    // verifica miscari posibile pentru fiecare piesa
+    // Verifica miscari posibile pentru fiecare piesa
     for (int y = 0; y < kBoardSize; ++y) {
         for (int x = 0; x < kBoardSize; ++x) {
-            Coord* coord = new Coord(x, y);
+            auto coord = std::make_shared<Coord>(x, y);
             if (IsOwnPiece(coord)) {
                 CheckValidTurns(coord);
             }
         }
     }
 
-    // joc sfarsit
-    if (valid_turns_.size() == 0) {
+    // Joc sfarsit
+    if (valid_turns_.empty()) {
         char opponent = GetOpponent();
         SetPlayer(opponent - kManKingDiff);
     }
 
-    // capturare fortata
+    // Capturare fortata
     if (forced_capture_) {
-        auto iterator = valid_turns_.begin();
-        while (iterator != valid_turns_.end()) {
-            if ((*iterator)->Capture()) {
-                ++iterator;
-            }
-            else {
-                iterator = valid_turns_.erase(iterator);
-            }
-        }
+        valid_turns_.erase(
+            std::remove_if(valid_turns_.begin(), valid_turns_.end(), [](const std::shared_ptr<Turn>& turn) {
+                return !turn->Capture();
+                }),
+            valid_turns_.end()
+        );
     }
-
-
 }
 
 void State::Print() const {
@@ -137,17 +128,15 @@ void State::Print() const {
     std::cout << kHRuler << std::endl;
 }
 
-bool State::CheckMatchingVaildTurn(Turn* turn) const {
-    for (auto valid_turn : valid_turns_) {
-        if (valid_turn->CheckMatching(turn)) {
-            return true;
-        }
-    }
-    return false;
+bool State::CheckMatchingVaildTurn(const std::shared_ptr<Turn>& turn) const {
+    return std::any_of(valid_turns_.begin(), valid_turns_.end(),
+        [&turn](const std::shared_ptr<Turn>& valid_turn) {
+            return valid_turn->CheckMatching(turn);
+        });
 }
 
-void State::Move(Turn* turn) {
-    std::vector<Coord*> coords = turn->Coords();
+void State::Move(std::shared_ptr<Turn> turn) {
+    auto coords = turn->Coords();
     char player = GetPlayer();
     char piece = GetPiece(coords[0]);
     bool king = IsKing(coords[0]);
@@ -155,241 +144,117 @@ void State::Move(Turn* turn) {
 
     SetPiece(coords[0], kLegalSpace);
 
-    // daca sare
+    // Daca sare
     if (turn->Capture()) {
         for (int i = 0; i < last_coord_index; ++i) {
-            Coord* mid_coord = coords[i]->Average(coords[i + 1]);
+            auto mid_coord = coords[i]->Average(coords[i + 1]);
             SetPiece(coords[i], kLegalSpace);
             SetPiece(mid_coord, kLegalSpace);
         }
     }
 
-    // incoronare
-    if (player == kValidPlayerO && coords[last_coord_index]->y == kBoardSize - 1
-        || player == kValidPlayerX && coords[last_coord_index]->y == 0) {
+    // Incronare
+    if ((player == kValidPlayerO && coords[last_coord_index]->y == kBoardSize - 1) ||
+        (player == kValidPlayerX && coords[last_coord_index]->y == 0)) {
         if (!king) {
             piece -= kManKingDiff;
         }
     }
 
-    // ultima coord
+    // Ultima coordonata
     SetPiece(coords[last_coord_index], piece);
 }
 
 void State::SetNextPlayer() {
-    if (GetPlayer() == kValidPlayerO) {
-        data_[kIdIndex] = kValidPlayerX;
-    }
-    else {
-        data_[kIdIndex] = kValidPlayerO;
-    }
+    data_[kIdIndex] = (GetPlayer() == kValidPlayerO) ? kValidPlayerX : kValidPlayerO;
 }
 
 void State::SetInvalidTurn() {
-    if (GetPlayer() == kValidPlayerO) {
-        data_[kIdIndex] = kInvalidPlayerO;
-    }
-    else {
-        data_[kIdIndex] = kInvalidPlayerX;
-    }
+    data_[kIdIndex] = (GetPlayer() == kValidPlayerO) ? kInvalidPlayerO : kInvalidPlayerX;
 }
 
 char State::GetPlayer() const {
-    if (data_[kIdIndex] == kValidPlayerO
-        || data_[kIdIndex] == kInvalidPlayerO
-        || data_[kIdIndex] == kWinningPlayerO) {
-        return kValidPlayerO;
-    }
-    else {
-        return kValidPlayerX;
-    }
+    return (data_[kIdIndex] == kValidPlayerO || data_[kIdIndex] == kInvalidPlayerO || data_[kIdIndex] == kWinningPlayerO)
+        ? kValidPlayerO : kValidPlayerX;
 }
 
 int State::GetWinnerCode() const {
-    if (data_[kIdIndex] == kWinningPlayerO) {
-        return 1;
-    }
-    if (data_[kIdIndex] == kWinningPlayerX) {
-        return 2;
-    }
+    if (data_[kIdIndex] == kWinningPlayerO) return 1;
+    if (data_[kIdIndex] == kWinningPlayerX) return 2;
     return 0;
 }
 
-void State::CheckValidTurns(Coord* coord) {
-    std::vector<Coord*> coords;
-    coords.push_back(coord);
-    bool king = IsKing(coord);
-    Coord* new_coord;
+// Restul metodelor care interactioneaza cu coordonatele
+// De exemplu, metodele care adaugau valid_turns vor utiliza std::shared_ptr<Turn>
 
-    // sare
-    new_coord = new Coord(coord->x - 2, coord->y - 2);    // stanga jos
-    CheckValidJumpTurns(coord, new_coord, coords, king);
-    new_coord = new Coord(coord->x + 2, coord->y - 2);    // dreapta jos
-    CheckValidJumpTurns(coord, new_coord, coords, king);
-    new_coord = new Coord(coord->x - 2, coord->y + 2);    // stanga sus
-    CheckValidJumpTurns(coord, new_coord, coords, king);
-    new_coord = new Coord(coord->x + 2, coord->y + 2);    // dreapta sus
-    CheckValidJumpTurns(coord, new_coord, coords, king);
-
-    // merge
-    if (!forced_capture_) {
-        CheckValidMoveTurns(coord);
-    }
+void State::AddValidJumpTurn(const std::vector<std::shared_ptr<Coord>>& coords) {
+    valid_turns_.push_back(std::make_shared<Turn>(coords, true));
 }
 
-bool State::CheckValidJumpTurns(
-    Coord* pre_coord, Coord* new_coord, std::vector<Coord*> coords, bool king) {
-    if (IsJumpable(pre_coord, new_coord, king)) {
-        coords.push_back(new_coord);
-        bool child = false;
-        Coord* next_coord;
-
-        // saritura avansata
-        next_coord = new Coord(new_coord->x - 2, new_coord->y - 2);   // stanga jos
-        if (!pre_coord->Equal(next_coord)) {
-            child = CheckValidJumpTurns(new_coord, next_coord, coords, king) || child;
-        }
-        next_coord = new Coord(new_coord->x + 2, new_coord->y - 2);   // dreapta jos
-        if (!pre_coord->Equal(next_coord)) {
-            child = CheckValidJumpTurns(new_coord, next_coord, coords, king) || child;
-        }
-        next_coord = new Coord(new_coord->x - 2, new_coord->y + 2);   // stanga sus
-        if (!pre_coord->Equal(next_coord)) {
-            child = CheckValidJumpTurns(new_coord, next_coord, coords, king) || child;
-        }
-        next_coord = new Coord(new_coord->x + 2, new_coord->y + 2);   // dreapta sus
-        if (!pre_coord->Equal(next_coord)) {
-            child = CheckValidJumpTurns(new_coord, next_coord, coords, king) || child;
-        }
-
-        if (!child) {
-            forced_capture_ = true;
-            AddValidJumpTurn(coords);
-        }
-        return true;
-    }
-    else {
-        return false;
-    }
+void State::AddValidMoveTurn(std::shared_ptr<Coord> pre_coord, std::shared_ptr<Coord> new_coord) {
+    valid_turns_.push_back(std::make_shared<Turn>(std::vector<std::shared_ptr<Coord>>{pre_coord, new_coord}, false));
 }
 
-void State::CheckValidMoveTurns(Coord* coord) {
-    Coord* new_coord;
-
-    new_coord = new Coord(coord->x - 1, coord->y - 1);        // stanga jos
-    if (IsMovable(coord, new_coord)) {
-        AddValidMoveTurn(coord, new_coord);
-    }
-    new_coord = new Coord(coord->x + 1, coord->y - 1);        // dreapta jos
-    if (IsMovable(coord, new_coord)) {
-        AddValidMoveTurn(coord, new_coord);
-    }
-    new_coord = new Coord(coord->x - 1, coord->y + 1);        // stanga sus
-    if (IsMovable(coord, new_coord)) {
-        AddValidMoveTurn(coord, new_coord);
-    }
-    new_coord = new Coord(coord->x + 1, coord->y + 1);        // dreapta sus
-    if (IsMovable(coord, new_coord)) {
-        AddValidMoveTurn(coord, new_coord);
-    }
-}
-
-void State::AddValidJumpTurn(const std::vector<Coord*> coords) {
-    valid_turns_.push_back(new Turn(coords, true));
-}
-
-void State::AddValidMoveTurn(Coord* pre_coord, Coord* new_coord) {
-    std::vector<Coord*> coords;
-    coords.push_back(pre_coord);
-    coords.push_back(new_coord);
-    valid_turns_.push_back(new Turn(coords, false));
-}
-
-bool State::IsValidCoord(const Coord* coord) const {
+bool State::IsValidCoord(const std::shared_ptr<Coord>& coord) const {
     return (coord->x >= 0 && coord->x < kBoardSize
         && coord->y >= 0 && coord->y < kBoardSize);
 }
 
-bool State::IsOwnPiece(const Coord* coord) const {
+bool State::IsOwnPiece(const std::shared_ptr<Coord>& coord) const {
     char player = GetPlayer();
     char piece = GetPiece(coord);
 
-    if (piece == player || piece == player - kManKingDiff) {
-        return true;
-    }
-    else {
-        return false;
-    }
+    return (piece == player || piece == player - kManKingDiff);
 }
 
-bool State::IsOpponentPiece(const Coord* coord) const {
+bool State::IsOpponentPiece(const std::shared_ptr<Coord>& coord) const {
     char opponent = GetOpponent();
     char piece = GetPiece(coord);
 
-    if (piece == opponent || piece == opponent - kManKingDiff) {
-        return true;
-    }
-    else {
-        return false;
-    }
+    return (piece == opponent || piece == opponent - kManKingDiff);
 }
 
-bool State::IsLegal(const Coord* coord) const {
+bool State::IsLegal(const std::shared_ptr<Coord>& coord) const {
     return GetPiece(coord) == kLegalSpace;
 }
 
-bool State::IsKing(const Coord* coord) const {
+bool State::IsKing(const std::shared_ptr<Coord>& coord) const {
     char piece = GetPiece(coord);
     return piece >= 'A' && piece <= 'Z';
 }
 
-bool State::IsValidDirection(Coord* pre_coord, Coord* new_coord) const {
+bool State::IsValidDirection(std::shared_ptr<Coord> pre_coord, std::shared_ptr<Coord> new_coord) const {
     char player = GetPlayer();
     int stepY = new_coord->y - pre_coord->y;
-    if (player == kValidPlayerO && stepY > 0
-        || player == kValidPlayerX && stepY < 0) {
-        return true;
-    }
-    return false;
+    return (player == kValidPlayerO && stepY > 0) || (player == kValidPlayerX && stepY < 0);
 }
 
-bool State::IsMovable(Coord* pre_coord, Coord* new_coord) const {
-    if (IsValidCoord(new_coord) && IsLegal(new_coord)
-        && (IsValidDirection(pre_coord, new_coord) || IsKing(pre_coord))) {
-        return true;
-    }
-    return false;
+bool State::IsMovable(std::shared_ptr<Coord> pre_coord, std::shared_ptr<Coord> new_coord) const {
+    return IsValidCoord(new_coord) && IsLegal(new_coord)
+        && (IsValidDirection(pre_coord, new_coord) || IsKing(pre_coord));
 }
 
-bool State::IsJumpable(Coord* pre_coord, Coord* new_coord, bool king) const {
+bool State::IsJumpable(std::shared_ptr<Coord> pre_coord, std::shared_ptr<Coord> new_coord, bool king) const {
     if (IsValidCoord(new_coord) && IsLegal(new_coord)
         && (IsValidDirection(pre_coord, new_coord) || king)) {
-        Coord* mid_coord = pre_coord->Average(new_coord);
-        if (IsOpponentPiece(mid_coord)) {
-            return true;
-        }
+        auto mid_coord = pre_coord->Average(new_coord);
+        return IsOpponentPiece(mid_coord);
     }
     return false;
 }
 
 char State::GetOpponent() const {
-    char player = GetPlayer();
-    if (player == kValidPlayerO) {
-        return kValidPlayerX;
-    }
-    else {
-        return kValidPlayerO;
-    }
+    return (GetPlayer() == kValidPlayerO) ? kValidPlayerX : kValidPlayerO;
 }
 
-void State::SetPlayer(const char player) {
+void State::SetPlayer(char player) {
     data_[kIdIndex] = player;
 }
 
-void State::SetPiece(const Coord* coord, const char piece) {
+void State::SetPiece(std::shared_ptr<Coord> coord, char piece) {
     data_[coord->y * kBoardSize + coord->x] = piece;
 }
 
-char State::GetPiece(const Coord* coord) const {
+char State::GetPiece(std::shared_ptr<Coord> coord) const {
     return data_[coord->y * kBoardSize + coord->x];
 }

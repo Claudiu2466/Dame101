@@ -1,8 +1,10 @@
-#include <iostream>
+﻿#include <iostream>
+#include <memory>
+#include <string>
 #include "state.h"
 #include "turn.h"
 
-// Functie care afiseaza meniul principals
+// Functie care afiseaza meniul principal
 void DisplayMainMenu() {
     std::cout << "Bun Venit la jocul de dame!\n";
     std::cout << "=============================\n";
@@ -28,9 +30,9 @@ int main(int argc, char* argv[]) {
         std::cin.ignore();
 
         if (choice == 1) {
-            // Incepe jocul
-            State* state = new State();
-            Turn* turn = new Turn();
+            // incepe jocul
+            auto state = std::make_unique<State>(); // Folosim std::unique_ptr pentru State
+            auto turn = std::make_unique<Turn>();   // Folosim std::unique_ptr pentru Turn
 
             while (true) {
                 // Creaza lista de miscari posibile
@@ -42,35 +44,33 @@ int main(int argc, char* argv[]) {
                 // Alege jucatorul curent
                 char player = state->GetPlayer();
 
-                // Verifica daca jocul e finisat
+                // Verifica daca jocul s-a terminat
                 int winner_code = state->GetWinnerCode();
                 if (winner_code > 0) {
-                    std::cout << "\n-- jucatorul " << player << " castiga\n" << std::endl;
-                    delete state;
-                    delete turn;
+                    std::cout << "\n-- Jucatorul " << player << " castiga\n" << std::endl;
                     return winner_code;
                 }
 
-                // Asteapta pentru player-input
-                std::cout << "\njucatorul '" << player << "'> ";
-                std::cin.clear();
-                std::cin.getline(turn->Data(), Turn::kDataLength);
-                std::cout << std::endl;
+                // asteapta inputul jucatorului
+                std::cout << "\nJucatorul '" << player << "'> ";
+                std::string move_input;
+                std::getline(std::cin, move_input);
 
-                // Verifica daca miscrea e valida
+                // Verifica daca miscarea este valida
+                turn->SetData(move_input); // Folosim functia SetData pentru a seta inputul
                 if (state->CheckMatchingVaildTurn(turn)) {
-                    // decodeaza inputul jucatorului intr-o lista de coordonate
+                    // Decodeaza inputul jucatorului intr-o lista de coordonate
                     turn->Decode();
 
-                    // opereaza miscarea
+                    // Opereaza miscarea
                     state->Move(turn);
 
-                    // urmatorul jucator preia miscarea
+                    // Urmatorul jucator preia miscarea
                     state->SetNextPlayer();
                 }
                 else {
                     // Input nevalid
-                    std::cout << "-- miscare incorecta\n" << std::endl;
+                    std::cout << "-- Miscare incorecta\n" << std::endl;
                     state->SetInvalidTurn();
                 }
             }

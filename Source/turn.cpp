@@ -1,57 +1,59 @@
 ﻿// turn.cpp
 #include "turn.h"
 #include <sstream>
-#include <cstring>
+#include <algorithm>
+#include <iterator>
+#include <memory>
 
-// constructor implicit
+// Constructor implicit
 Turn::Turn() : capture_(false) {}
 
-// constructor cu parametrii
-Turn::Turn(const std::vector<Coord*>& coords, bool capture)
+// Constructor cu parametrii
+Turn::Turn(const std::vector<std::shared_ptr<Coord>>& coords, bool capture)
     : coords_(coords), capture_(capture) {
     Encode();
 }
 
-// constructor de copiere
+// Constructor de copiere
 Turn::Turn(const Turn& other)
     : coords_(other.coords_), capture_(other.capture_) {
-    std::copy(std::begin(other.data_), std::end(other.data_), std::begin(data_));
+    std::copy(other.data_.begin(), other.data_.end(), std::back_inserter(data_));
 }
 
-// destructor
-Turn::~Turn() {
-    for (Coord* coord : coords_) {
-        delete coord; // elimina coordonatele alocate dinamic
-    }
-}
+// Destructor
+Turn::~Turn() = default;  // Nu mai e nevoie sa eliberam manual memoria, deoarece folosim smart pointers
 
-// operator de atribuire
+// Operator de atribuire
 Turn& Turn::operator=(const Turn& other) {
     if (this != &other) {
-        for (Coord* coord : coords_) {
-            delete coord; // eliberăm memoria pentru coordonatele vechi
-        }
         coords_ = other.coords_;
         capture_ = other.capture_;
-        std::copy(std::begin(other.data_), std::end(other.data_), std::begin(data_));
+        data_ = other.data_;
     }
     return *this;
 }
 
-// operator de comparare
+// Operator de comparare
 bool Turn::operator==(const Turn& other) const {
-    return capture_ == other.capture_ && std::string(data_) == std::string(other.data_);
+    return capture_ == other.capture_ && data_ == other.data_;
 }
 
-// operator de citire
+// Operator de citire
 std::istream& operator>>(std::istream& is, Turn& turn) {
     std::string input;
     is >> input;
+    std::istringstream iss(input);
 
+    std::vector<std::shared_ptr<Coord>> coords;
+    std::string token;
+    while (iss >> token) {
+        coords.push_back(std::make_shared<Coord>(token[0] - kXMin, token[1] - kYMin));
+    }
+    turn.coords_ = coords;
     return is;
 }
 
-// operator de afisare
+// Operator de afisare
 std::ostream& operator<<(std::ostream& os, const Turn& turn) {
     os << "Capture: " << (turn.capture_ ? "Yes" : "No") << ", Coords: ";
     for (const auto& coord : turn.coords_) {
@@ -61,41 +63,31 @@ std::ostream& operator<<(std::ostream& os, const Turn& turn) {
 }
 
 void Turn::Decode() {
-    // sterge vectorul coordonatelor
     coords_.clear();
-
     std::istringstream iss(data_);
     std::string token;
     while (iss >> token) {
-        Coord* coord = new Coord(token[0] - kXMin, token[1] - kYMin);
-        coords_.push_back(coord);
+        coords_.push_back(std::make_shared<Coord>(token[0] - kXMin, token[1] - kYMin));
     }
 }
 
-bool Turn::CheckMatching(Turn* turn) const {
-    turn->capture_ = capture_;
-    std::string str1(data_);
-    std::string str2(turn->Data());
-    return str1.compare(str2) == 0;
+bool Turn::CheckMatching(const Turn& turn) const {
+    return capture_ == turn.capture_ && data_ == turn.data_;
 }
 
 void Turn::Encode() {
-    int coords_size = coords_.size();
-
-    int index = 0;
-    for (int i = 0; i < coords_size; ++i) {
-        data_[index++] = coords_[i]->x + kXMin;
-        data_[index++] = coords_[i]->y + kYMin;
-        data_[index++] = ' ';
+    std::ostringstream oss;
+    for (const auto& coord : coords_) {
+        oss << char(coord->x + kXMin) << char(coord->y + kYMin) << ' ';
     }
-    data_[--index] = '\0'; // sfarsit de sir
+    data_ = oss.str();
 }
 
-char* Turn::Data() {
+const std::string& Turn::Data() const {
     return data_;
 }
 
-std::vector<Coord*> Turn::Coords() const {
+const std::vector<std::shared_ptr<Coord>>& Turn::Coords() const {
     return coords_;
 }
 

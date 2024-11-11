@@ -5,6 +5,7 @@
 #include "coord.h"
 #include <vector>
 #include <string>
+#include <memory>  // pentru smart pointers
 
 class Turn {
 public:
@@ -12,13 +13,13 @@ public:
     Turn();
 
     // constructor cu parametrii
-    Turn(const std::vector<Coord*>& coords, bool capture);
+    Turn(const std::vector<std::shared_ptr<Coord>>& coords, bool capture);
 
     // constructor de copiere
     Turn(const Turn& other);
 
     // destructor
-    ~Turn();
+    ~Turn() = default;
 
     // operator de atribuire
     Turn& operator=(const Turn& other);
@@ -33,16 +34,16 @@ public:
     friend std::ostream& operator<<(std::ostream& os, const Turn& turn);
 
     void Decode();
-    bool CheckMatching(Turn* turn) const;
+    bool CheckMatching(const std::shared_ptr<Turn>& turn) const;
     void Encode();
-    char* Data();
-    std::vector<Coord*> Coords() const;
+    const std::string& Data() const;
+    const std::vector<std::shared_ptr<Coord>>& Coords() const;
     bool Capture() const;
 
 private:
-    std::vector<Coord*> coords_;
+    std::vector<std::shared_ptr<Coord>> coords_;  // Folosim smart pointers pentru coordonate
     bool capture_;
-    char data_[256]; // Adjust size as needed
+    std::string data_;  // Folosim std::string pentru date
 };
 
 #endif // TURN_H_
