@@ -10,6 +10,7 @@
 #include <memory>    // pentru smart pointers
 #include "turn.h"
 #include "coord.h"
+#include "json.hpp"
 
 class Turn;
 
@@ -42,6 +43,28 @@ public:
     int GetWinnerCode() const;
 
     const std::string& Data() const { return data_; }
+
+    // Funcție pentru a salva starea jocului într-un fișier JSON
+    void SaveToJson(const std::string& filename) const {
+        nlohmann::json j;
+        j["data"] = data_;
+        j["o_count"] = o_count_;
+        j["x_count"] = x_count_;
+        // alte date relevante
+        std::ofstream file(filename);
+        file << j.dump(4);  // Salvează în format frumos indentat
+    }
+
+    // Funcție pentru a încărca starea jocului dintr-un fișier JSON
+    void LoadFromJson(const std::string& filename) {
+        nlohmann::json j;
+        std::ifstream file(filename);
+        file >> j;
+        data_ = j["data"];
+        o_count_ = j["o_count"];
+        x_count_ = j["x_count"];
+        // alte date relevante
+    }
 
 private:
     const static int kManKingDiff = 'a' - 'A';
@@ -82,6 +105,10 @@ private:
     std::string data_;  // Utilizam std::string in loc de un char array
     std::vector<std::shared_ptr<Turn>> valid_turns_;  // Folosim smart pointers
     bool forced_capture_;
+    int o_count_;
+    int x_count_;
+
+    std::string data_;
     int o_count_;
     int x_count_;
 };
