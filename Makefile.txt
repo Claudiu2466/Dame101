@@ -1,0 +1,42 @@
+CC = g++
+CFLAGS = -std=c++17 -Wall -Iinclude
+LDFLAGS = -Llib -lcoord -lstate -lturn
+
+LIBDIR = lib
+OBJDIR = obj
+
+# Fișierele sursă
+SRC = src/coord.cpp src/state.cpp src/turn.cpp src/main.cpp
+OBJ = $(SRC:src/%.cpp=$(OBJDIR)/%.o)
+
+# Crează directoarele pentru obiecte și biblioteci
+$(OBJDIR):
+    mkdir -p $(OBJDIR)
+
+$(LIBDIR):
+    mkdir -p $(LIBDIR)
+
+# Biblioteca coord
+LIBCOORD = $(LIBDIR)/libcoord.a
+$(LIBCOORD): $(OBJDIR)/coord.o
+    ar rcs $(LIBCOORD) $(OBJDIR)/coord.o
+
+# Biblioteca state
+LIBSTATE = $(LIBDIR)/libstate.a
+$(LIBSTATE): $(OBJDIR)/state.o
+    ar rcs $(LIBSTATE) $(OBJDIR)/state.o
+
+# Biblioteca turn
+LIBTURN = $(LIBDIR)/libturn.a
+$(LIBTURN): $(OBJDIR)/turn.o
+    ar rcs $(LIBTURN) $(OBJDIR)/turn.o
+
+# Regula principală de construire a aplicației
+all: $(OBJDIR) $(LIBCOORD) $(LIBSTATE) $(LIBTURN) $(OBJDIR)/main.o
+    $(CC) $(OBJDIR)/main.o $(LDFLAGS) -o game
+
+$(OBJDIR)/%.o: src/%.cpp
+    $(CC) $(CFLAGS) -c $< -o $@
+
+clean:
+    rm -rf $(OBJDIR) $(LIBDIR) game
