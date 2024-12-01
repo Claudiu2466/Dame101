@@ -1,16 +1,17 @@
-﻿//
+﻿// state.h
 // STAREA TABLEI DE JOC SI JUCATORUL ACTIV.
-// 
 
 #ifndef STATE_H_
 #define STATE_H_
 
 #include <vector>
+#include <string>
+#include <iostream>  // pentru operatori de suprascriere
+#include <memory>    // pentru smart pointers
 #include "turn.h"
 #include "coord.h"
 
 class Turn;
-
 
 class State {
 public:
@@ -18,21 +19,29 @@ public:
     const static int kIdIndex = kBoardSize * kBoardSize;
     const static int kDataLength = kIdIndex + 1 + 1;
 
-    State();
-    ~State() {}
+    State();  // constructor implicit
+    State(const State& other);  // constructor de copiere
+    State(const std::string& data);  // constructor cu param
+    ~State() = default;
+
+    State& operator=(const State& other);  // operator de copiere
+    bool operator==(const State& other) const;  // operator de comparare
+
+    friend std::istream& operator>>(std::istream& is, State& state);  // operator de citire
+    friend std::ostream& operator<<(std::ostream& os, const State& state);  // operator de afisare
 
     void BuildListValidTurns();
     void Print() const;
 
-    bool CheckMatchingVaildTurn(Turn* turn) const;
-    void Move(Turn* turn);
+    bool CheckMatchingValidTurn(std::shared_ptr<Turn> turn) const;
+    void Move(std::shared_ptr<Turn> turn);
     void SetNextPlayer();
     void SetInvalidTurn();
 
     char GetPlayer() const;
     int GetWinnerCode() const;
 
-    char* Data() { return data_; }
+    const std::string& Data() const { return data_; }
 
 private:
     const static int kManKingDiff = 'a' - 'A';
@@ -47,8 +56,7 @@ private:
 
     void CheckValidTurns(Coord* coord);
 
-    bool CheckValidJumpTurns(
-        Coord* pre_coord, Coord* new_coord, std::vector<Coord*> coords, bool king);
+    bool CheckValidJumpTurns(Coord* pre_coord, Coord* new_coord, std::vector<Coord*> coords, bool king);
     void CheckValidMoveTurns(Coord* coord);
 
     void AddValidJumpTurn(const std::vector<Coord*> coords);
@@ -71,12 +79,11 @@ private:
     void SetPiece(const Coord* coord, const char piece);
     char GetPiece(const Coord* coord) const;
 
-    char data_[kDataLength];
-    std::vector<Turn*> valid_turns_;
+    std::string data_;  // Utilizam std::string in loc de un char array
+    std::vector<std::shared_ptr<Turn>> valid_turns_;  // Folosim smart pointers
     bool forced_capture_;
     int o_count_;
     int x_count_;
 };
 
-#endif    // STATE_H_
-
+#endif  // STATE_H_
