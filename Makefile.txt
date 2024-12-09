@@ -30,12 +30,12 @@ $(TEST_EXEC): $(TEST_OBJS)
 	$(CXX) $(CXXFLAGS) -o $(TEST_EXEC) $(TEST_OBJS) -lgtest -lpthread
 
 # Regulă pentru compilarea testului `test_coord.cpp`
-test_coord.o: tests/test_coord.cpp
-	$(CXX) $(CXXFLAGS) -c tests/test_coord.cpp -o test_coord.o -lgtest
+test_coord.o: test_coord.cpp
+	$(CXX) $(CXXFLAGS) -c test_coord.cpp -o test_coord.o -lgtest
 
 # Regulă pentru compilarea testului `test_turn.cpp`
-test_turn.o: tests/test_turn.cpp
-	$(CXX) $(CXXFLAGS) -c tests/test_turn.cpp -o test_turn.o -lgtest
+test_turn.o: test_turn.cpp
+	$(CXX) $(CXXFLAGS) -c test_turn.cpp -o test_turn.o -lgtest
 
 # Regulă pentru rularea testelor
 runtests: test
