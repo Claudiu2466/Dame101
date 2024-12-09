@@ -1,13 +1,36 @@
 # Dame
-## Ce reprezinta acest proiect?
-- Acest proiect este o mini reprezentare a jocului de tabla "Dame".
-## Care sunt regulile de joc?
-- Jocul de "Dame" se joaca in 2. In varianta digitala exista posibilitatea de a juca atat contra un jucator real cat si impotriva unui calculator.
-### Exista 3 reguli de baza in "Dame":
-- Damele se pot deplasa numai in diagonala pe patratele intunecate.
-- La începutul jocului, piesele se pot deplasa doar înainte, adică spre partea adversarului.
-- Damele se pot deplasa in sus si in jos atunci cand devin „regi” ajungand la ultimul rand al partii opuse.
-## Explicatie claselor si structurilor de baza:
+
+## Ce reprezintă acest proiect?
+- Acest proiect este o mini reprezentare a jocului de tablă **"Dame"**.  
+  Scopul este de a recrea experiența jocului clasic de "Dame" într-un mediu digital, cu funcționalități care permit jucătorilor să se confrunte atât între ei, cât și împotriva inteligenței artificiale.
+
+## Care sunt regulile jocului?
+- Jocul de "Dame" se joacă în 2. În varianta digitală există posibilitatea de a juca atât contra unui jucător real, cât și împotriva unui calculator.  
+
+### Există 3 reguli de bază în "Dame":
+1. **Mișcări în diagonale**  
+   Damele se pot deplasa numai în diagonala pe patratelele întunecate.
+
+2. **Mișcări înainte**  
+   La începutul jocului, piesele se pot deplasa doar înainte, adică spre partea adversarului.
+
+3. **Regi**  
+   Damele se pot deplasa în sus și în jos atunci când devin **"regi"**, ajungând în ultimul rând al părții opuse.
+
+## Descrierea dependențelor proiectului
+- **Mediul de dezvoltare:** Visual Studio Code  
+- **Compilator:** MinGW G++  
+- **Biblioteci și instrumente utilizate:**  
+  - C++ Standard Library  
+  - Makefile pentru gestionarea construcției proiectului
+  - nlohmann/json pentru pastrarea datelor  
+
+## Descrierea modului de construire a aplicației
+1. Asigură-te că ai instalat **MinGW G++** și **Visual Studio Code** pe sistemul tău.
+2. Deschide terminalul în folder-ul proiectului.
+3. Compilarea proiectului:  
+   ```bash
+   make
 
 ## `coord.h`
 
