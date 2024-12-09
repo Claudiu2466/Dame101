@@ -28,9 +28,9 @@
 ## Descrierea modului de construire a aplicației
 1. Asigură-te că ai instalat **MinGW G++** și **Visual Studio Code** pe sistemul tău.
 2. Deschide terminalul în folder-ul proiectului.
-3. -Clonează acest repozitoriu;
-   -Compilează proiectul folosind make
-   -Rulează executabilul generat
+3. - Clonează acest repozitoriu;
+   - Compilează proiectul folosind make
+   - Rulează executabilul generat
 
 ## `coord.h`
 
